@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyncOS Fleet Orchestration — Product & Systems Analysis</title>
+    <style>
+        :root {
+            --primary: #0F172A;
+            --secondary: #2563EB;
+            --accent: #0EA5E9;
+            --bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 60px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .header-content {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(14, 165, 233, 0.2);
+            color: var(--accent);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            border: 1px solid rgba(14, 165, 233, 0.4);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        p.subtitle {
+            font-size: 1.15rem;
+            color: #94A3B8;
+            max-width: 750px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: -30px auto 0;
+            padding: 0 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+        }
+
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--secondary);
+            margin: 8px 0;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 32px;
+            border: 1px solid var(--border);
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2 span {
+            color: var(--secondary);
+        }
+
+        /* Timeline / Approach steps */
+        .step-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            position: relative;
+        }
+
+        .step-box {
+            background: #F1F5F9;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .step-num {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--secondary);
+            text-transform: uppercase;
+        }
+
+        .step-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin: 4px 0 8px;
+        }
+
+        .step-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Hypotheses Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #F8FAFC;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        td {
+            font-size: 0.95rem;
+        }
+
+        .status-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-validated {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .status-invalidated {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        /* RICE Cards */
+        .rice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .rice-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            background: #FAFAFA;
+        }
+
+        .rice-prio {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .prio-1 { background: var(--success); }
+        .prio-2 { background: var(--secondary); }
+        .prio-3 { background: var(--warning); }
+
+        /* File Tree */
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #F8FAFC;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .file-icon {
+            color: var(--secondary);
+            font-size: 1.2rem;
+        }
+
+        footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-content">
+            <span class="badge">SYSTEMS & PRODUCT CASE STUDY</span>
+            <h1>SyncOS Fleet Management Analysis</h1>
+            <p class="subtitle">A data-driven root cause analysis, telemetry simulation, and prioritization framework for optimizing autonomous AMR fleet throughput.</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Top Key Metrics -->
+        <div class="grid-3">
+            <div class="card">
+                <div class="metric-label">Fleet Size & Composition</div>
+                <div class="metric-value">10 AMRs</div>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">5 Autonomous Forklifts (Pallets) + 5 Dual-Conveyors (Materials)</p>
+            </div>
+            <div class="card">
+                <div class="metric-label">Analyzed Telemetry</div>
+                <div class="metric-value">5,000 Tasks</div>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">7 days of procedural operational logs & fleet ticks</p>
+            </div>
+            <div class="card">
+                <div class="metric-label">Max Throughput Lift</div>
+                <div class="metric-value">+14.7%</div>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Achieved via Proximity-Weighted Spatial Routing</p>
+            </div>
+        </div>
+
+        <!-- Analytical Approach -->
+        <section>
+            <h2><span>01.</span> Problem Solving Approach & Philosophy</h2>
+            <div class="step-container">
+                <div class="step-box">
+                    <div class="step-num">Phase 1</div>
+                    <div class="step-title">Baseline Context</div>
+                    <div class="step-desc">Mapped 24/7 facility constraints, mixed hardware capabilities, strict FIFO dispatching, and reactive charging logic.</div>
+                </div>
+                <div class="step-box">
+                    <div class="step-num">Phase 2</div>
+                    <div class="step-title">Procedural Simulation</div>
+                    <div class="step-desc">Generated realistic telemetry with Gaussian durations, time-of-day curves, and zone-weighted traffic to expose organic bottlenecks.</div>
+                </div>
+                <div class="step-box">
+                    <div class="step-num">Phase 3</div>
+                    <div class="step-title">Hypothesis Validation</div>
+                    <div class="step-desc">Evaluated 6 operational hypotheses using quantitative telemetry metrics, confirming 3 root causes and invalidating 3 myths.</div>
+                </div>
+                <div class="step-box">
+                    <div class="step-num">Phase 4</div>
+                    <div class="step-title">RICE & Throughput</div>
+                    <div class="step-desc">Prioritized engineering solutions by ROI (Reach x Impact / Effort) and modeled exact tasks/hour throughput yield.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Hypotheses Validation -->
+        <section>
+            <h2><span>02.</span> Hypotheses & Telemetry Validation</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 10px;">
+                Using realistic synthetic telemetry logs, we rigorously tested six potential operational friction points:
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hypothesis</th>
+                        <th>Premise</th>
+                        <th>Calculated Telemetry Metric</th>
+                        <th>Result Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>H1: Naive Routing</strong></td>
+                        <td>FIFO chronological dispatch forces excessive empty travel.</td>
+                        <td>Empty Travel Share = <strong>25.7%</strong> (119.4s / 465.0s)</td>
+                        <td><span class="status-tag status-validated">VALIDATED</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>H2: Station Bottlenecks</strong></td>
+                        <td>Shift handovers cause station delays.</td>
+                        <td>Station Wait Consistency = <strong>45.2s avg</strong> (stable across 24h)</td>
+                        <td><span class="status-tag status-invalidated">INVALIDATED</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>H3: Staging Deadlocks</strong></td>
+                        <td>Fleet converges on staging zones triggering traffic jams.</td>
+                        <td>Blockages = <strong>34.7% Dispatch Zone</strong>, <strong>26.6% Aisle 1</strong></td>
+                        <td><span class="status-tag status-validated">VALIDATED</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>H4: Reactive Charging</strong></td>
+                        <td>Run-to-depletion charging depletes peak-hour capacity.</td>
+                        <td>Avg Charging Threshold = <strong>24.0% Battery</strong></td>
+                        <td><span class="status-tag status-validated">VALIDATED</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>H5: Task Asymmetry</strong></td>
+                        <td>Payload imbalance overwhelms one robot class.</td>
+                        <td>Task Volume = <strong>54.6% Pallet</strong> vs <strong>45.4% Material</strong></td>
+                        <td><span class="status-tag status-invalidated">INVALIDATED</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>H6: Micro-Delays</strong></td>
+                        <td>Human workers cause uniform micro-interruptions.</td>
+                        <td>Delay Spatial Uniformity = <strong>>61% concentrated in 2 zones</strong></td>
+                        <td><span class="status-tag status-invalidated">INVALIDATED</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- RICE Roadmap -->
+        <section>
+            <h2><span>03.</span> Prioritized Engineering Roadmap</h2>
+            <div class="rice-grid">
+                <div class="rice-card">
+                    <span class="rice-prio prio-1">PRIORITY 1 — HIGHEST ROI</span>
+                    <h3 style="font-size: 1.1rem; margin: 6px 0;">Predictive Opportunistic Charging</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Resolves Reactive Charging (H4)</p>
+                    <ul style="font-size: 0.85rem; padding-left: 18px; color: var(--text-main);">
+                        <li><strong>Reach:</strong> 100% Fleet | <strong>Effort:</strong> Low</li>
+                        <li><strong>Impact:</strong> Reclaims peak-hour availability by charging during idle windows.</li>
+                        <li><strong>Yield:</strong> +518 tasks (+10.4% throughput)</li>
+                    </ul>
+                </div>
+                <div class="rice-card">
+                    <span class="rice-prio prio-2">PRIORITY 2 — HIGH IMPACT</span>
+                    <h3 style="font-size: 1.1rem; margin: 6px 0;">Proximity-Weighted Routing</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Resolves Naive Routing (H1)</p>
+                    <ul style="font-size: 0.85rem; padding-left: 18px; color: var(--text-main);">
+                        <li><strong>Reach:</strong> 100% Tasks | <strong>Effort:</strong> High</li>
+                        <li><strong>Impact:</strong> Replaces FIFO with X/Y coordinate distance minimization.</li>
+                        <li><strong>Yield:</strong> Reduces travel cycle time to 405.3s (+14.7% throughput)</li>
+                    </ul>
+                </div>
+                <div class="rice-card">
+                    <span class="rice-prio prio-3">PRIORITY 3 — SPATIAL LOGIC</span>
+                    <h3 style="font-size: 1.1rem; margin: 6px 0;">Zone Traffic Corridors</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Resolves Staging Deadlocks (H3)</p>
+                    <ul style="font-size: 0.85rem; padding-left: 18px; color: var(--text-main);">
+                        <li><strong>Reach:</strong> ~61% Tasks | <strong>Effort:</strong> Very High</li>
+                        <li><strong>Impact:</strong> Enforces digital one-way corridors in Dispatch & Aisle 1.</li>
+                        <li><strong>Yield:</strong> Clears 61.3% of global fleet blockages.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Repository Artifacts -->
+        <section>
+            <h2><span>04.</span> Repository Artifacts & Reports</h2>
+            <div class="file-grid">
+                <div class="file-item">
+                    <span class="file-icon">📄</span>
+                    <span>SyncOS Final Analysis.pdf</span>
+                </div>
+                <div class="file-item">
+                    <span class="file-icon">📄</span>
+                    <span>SyncOS Throughput Projections.pdf</span>
+                </div>
+                <div class="file-item">
+                    <span class="file-icon">📄</span>
+                    <span>SyncOS RICE Prioritization.pdf</span>
+                </div>
+                <div class="file-item">
+                    <span class="file-icon">📄</span>
+                    <span>SyncOS Orchestration Assumptions.pdf</span>
+                </div>
+                <div class="file-item">
+                    <span class="file-icon">📊</span>
+                    <span>Data Generation Philosophy.pdf</span>
+                </div>
+                <div class="file-item">
+                    <span class="file-icon">📊</span>
+                    <span>syncos_task_execution_log.csv</span>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>SyncOS Autonomous Fleet Management & Optimization Analysis • Prepared for Hiring & Engineering Leadership</p>
+        </footer>
+    </div>
+
+</body>
+</html>
